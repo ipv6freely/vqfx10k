@@ -1,0 +1,33 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANTFILE_API_VERSION = "2"
+
+## Generate a unique ID for this project
+UUID = [*('A'..'Z')].sample(6).join
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+    config.ssh.insert_key = false
+
+    ##########################
+    ## Routing Engine  #######
+    ##########################
+    config.vm.define "vqfx" do |vqfx|
+        vqfx.vm.hostname = "vqfx"
+        vqfx.vm.box = 'juniper/vqfx10k-re'
+        vqfx.vm.boot_timeout = 600
+
+        # DO NOT REMOVE / NO VMtools installed
+        vqfx.vm.synced_folder '.', '/vagrant', disabled: true
+
+        # Management port (em1 / em2)
+        vqfx.vm.network 'private_network', auto_config: false, nic_type: '82540EM', virtualbox__intnet: "#{UUID}_reserved_bridge"
+        vqfx.vm.network 'private_network', auto_config: false, nic_type: '82540EM', intnet: "#{UUID}_reserved_bridge"
+
+        # (em3  em4)
+        (1..2).each do |seg_id|
+            vqfx.vm.network 'private_network', auto_config: false, nic_type: '82540EM', intnet: "#{UUID}_segment"
+        end
+    end
+end
